@@ -1,0 +1,18 @@
+MUTUAL NON-DISCLOSURE AGREEMENT
+
+Title: Mutual Non-Disclosure Agreement
+Party A: Acme Robotics Ltd.
+Party B: Globex Corporation
+
+Effective Date: 2024-01-10
+Expiration Date: 2026-01-10
+Term: Two (2) years from the Effective Date.
+
+Governing Law: State of California, USA.
+Contract Value: $0.00
+Currency: USD
+Termination Notice: 30 days written notice.
+
+Obligations:
+- Each party shall protect the other's Confidential Information.
+- Confidential Information shall not be disclosed to third parties.

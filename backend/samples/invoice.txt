@@ -1,0 +1,22 @@
+ACME Supplies Inc.
+123 Industrial Way, Springfield
+
+INVOICE
+
+Invoice Number: INV-2024-0091
+Invoice Date: 2024-03-15
+Due Date: 2024-04-14
+
+Bill To: Globex Corporation
+Vendor Tax ID: US-998877
+
+Description                 Qty   Unit Price   Amount
+Widget Pro                  10    $12.50       $125.00
+Mounting Bracket            4     $8.00        $32.00
+Express Shipping            1     $18.00       $18.00
+
+Subtotal: $175.00
+Tax Amount: $14.00
+Total Amount: $189.00
+
+Currency: USD

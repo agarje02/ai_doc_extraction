@@ -1,0 +1,18 @@
+Jane A. Developer
+Location: Berlin, Germany
+Email: jane.dev@example.com
+Phone: +49 151 2345 6789
+LinkedIn: https://www.linkedin.com/in/janedev
+
+Current Title: Senior Backend Engineer
+Years Experience: 8
+
+Skills: Python, FastAPI, PostgreSQL, Docker, Kubernetes, AWS
+
+Experience:
+- Senior Backend Engineer, Globex (2021-present): Led migration to microservices.
+- Backend Engineer, Initech (2017-2021): Built billing and reporting services.
+
+Education:
+- M.Sc. Computer Science, TU Munich, 2017
+- B.Sc. Software Engineering, Uni Stuttgart, 2015

@@ -1,0 +1,35 @@
+# Web framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# Config & validation
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# Persistence
+SQLAlchemy==2.0.36
+# PostgreSQL / Supabase driver (psycopg 3). Not needed for the SQLite default.
+psycopg[binary]==3.2.3
+
+# Document/text extraction
+pdfplumber==0.11.4
+pypdf==5.1.0
+python-docx==1.1.2
+pytesseract==0.3.13
+pdf2image==1.17.0
+Pillow==11.1.0
+
+# Tokenization for chunking
+tiktoken==0.8.0
+
+# LLM providers (optional at runtime; imported lazily)
+openai==1.59.6
+anthropic==0.42.0
+httpx==0.28.1
+
+# CLI
+typer==0.23.1
+
+# Testing
+pytest==8.3.4
