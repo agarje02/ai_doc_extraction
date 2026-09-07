@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { API_BASE } from "@/lib/api";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -30,7 +31,7 @@ export default function RootLayout({
                 Documents
               </Link>
               <a
-                href="http://localhost:8000/docs"
+                href={`${API_BASE}/docs`}
                 target="_blank"
                 rel="noreferrer"
                 className="hover:text-(--text)"

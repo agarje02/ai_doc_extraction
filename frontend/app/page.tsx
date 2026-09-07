@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { api } from "@/lib/api";
+import { api, API_BASE } from "@/lib/api";
 import type { DocSchema, DocumentSummary } from "@/lib/types";
 
 export default function HomePage() {
@@ -163,9 +162,14 @@ export default function HomePage() {
 
       <section className="text-sm text-(--muted)">
         Tip: manage past runs from the API at{" "}
-        <Link href="http://localhost:8000/docs" className="text-(--accent)">
+        <a
+          href={`${API_BASE}/docs`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-(--accent)"
+        >
           /docs
-        </Link>
+        </a>
         .
       </section>
     </div>

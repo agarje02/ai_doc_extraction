@@ -118,6 +118,42 @@ OCR uses [Tesseract](https://github.com/tesseract-ocr/tesseract) and
 Install both, then set `TESSERACT_CMD` and `POPPLER_PATH` in `.env` if they are
 not on your PATH. OCR only kicks in when a page has little/no native text.
 
+## Deployment
+
+Frontend and backend deploy separately.
+
+### Frontend -> Vercel
+
+The Next.js app is a natural fit for Vercel.
+
+1. Import the repo in Vercel and set the project **Root Directory** to `frontend`.
+2. Add an environment variable `NEXT_PUBLIC_API_BASE` = your deployed backend URL
+   (e.g. `https://ai-doc-extraction-api.onrender.com`).
+3. Deploy. All API links use `API_BASE`, so nothing is hardcoded to localhost.
+
+### Backend -> Docker host (Render / Railway / Fly)
+
+The backend needs the Tesseract/Poppler system binaries and persistent file
+storage, so it is deployed as a Docker container (not on Vercel). A
+[backend/Dockerfile](backend/Dockerfile) and a Render blueprint
+([render.yaml](render.yaml)) are included.
+
+On Render:
+
+1. **New -> Blueprint** and pick this repo (uses `render.yaml`), or **New -> Web
+   Service** with Root Directory `backend` and Runtime Docker.
+2. Keep the attached **persistent disk** mounted at `/data` so uploads survive
+   restarts (`STORAGE_DIR=/data/storage`).
+3. Set env vars: `LLM_PROVIDER`, `LLM_MODEL`, `OPENAI_API_KEY` (or Anthropic),
+   `DATABASE_URL` (Supabase/Postgres), and `CORS_ORIGINS` = your Vercel URL.
+4. Deploy, then verify `https://<service>/health`.
+
+The container start command honors `$PORT` and `WEB_CONCURRENCY`; tables are
+created automatically on first boot. Set `CORS_ORIGINS` to the exact frontend
+origin or the browser will block requests. On fully ephemeral platforms (e.g.
+Cloud Run, which has no persistent disk), move uploads to object storage
+(Supabase Storage / S3) since local files are lost between instances.
+
 ## REST API (summary)
 
 | Method | Path                              | Purpose                          |
