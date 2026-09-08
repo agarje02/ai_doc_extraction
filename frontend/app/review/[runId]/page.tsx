@@ -78,7 +78,7 @@ function FieldRow({
 
   return (
     <div
-      className="rounded-xl border p-4"
+      className="rounded-xl border p-4 shadow-(--shadow)"
       style={{
         borderColor: field.needs_review ? "#f8514955" : "var(--border)",
         background: field.needs_review ? "#f8514910" : "var(--surface)",
@@ -122,7 +122,7 @@ function FieldRow({
             <button
               onClick={save}
               disabled={saving}
-              className="rounded-lg bg-(--accent) px-3 py-1 text-sm font-medium text-[#0b0f17] disabled:opacity-50"
+              className="rounded-lg bg-(--accent) px-3 py-1 text-sm font-medium text-(--accent-foreground) transition-colors hover:bg-(--accent-hover) disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save"}
             </button>
@@ -291,20 +291,20 @@ export default function ReviewPage({
           </div>
           <a
             href={api.exportUrl(runId, "json")}
-            className="rounded-lg border border-(--border) px-3 py-1.5 text-sm"
+            className="rounded-lg border border-(--border) bg-(--surface) px-3 py-1.5 text-sm transition-colors hover:border-(--accent)"
           >
             Export JSON
           </a>
           <a
             href={api.exportUrl(runId, "csv")}
-            className="rounded-lg border border-(--border) px-3 py-1.5 text-sm"
+            className="rounded-lg border border-(--border) bg-(--surface) px-3 py-1.5 text-sm transition-colors hover:border-(--accent)"
           >
             Export CSV
           </a>
           <button
             onClick={reRun}
             disabled={reRunning}
-            className="rounded-lg bg-(--accent) px-3 py-1.5 text-sm font-medium text-[#0b0f17] disabled:opacity-50"
+            className="rounded-lg bg-(--accent) px-3 py-1.5 text-sm font-medium text-(--accent-foreground) transition-colors hover:bg-(--accent-hover) disabled:opacity-50"
           >
             {reRunning ? "Re-running…" : "Re-run"}
           </button>

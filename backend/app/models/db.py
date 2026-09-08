@@ -130,9 +130,17 @@ _settings = get_settings()
 _db_url = _normalize_db_url(_settings.database_url)
 _is_sqlite = _db_url.startswith("sqlite")
 
+if _is_sqlite:
+    _connect_args: dict = {"check_same_thread": False}
+else:
+    # Disable psycopg auto prepared-statements so the app also works behind the
+    # Supabase transaction pooler (Supavisor/pgbouncer on port 6543), which does
+    # not support server-side prepared statements. Harmless in session mode.
+    _connect_args = {"prepare_threshold": None}
+
 engine = create_engine(
     _db_url,
-    connect_args={"check_same_thread": False} if _is_sqlite else {},
+    connect_args=_connect_args,
     # pool_pre_ping avoids stale-connection errors against hosted DBs
     # (Supabase/pgbouncer drop idle connections).
     pool_pre_ping=not _is_sqlite,

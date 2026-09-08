@@ -1,24 +1,59 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { api, API_BASE } from "@/lib/api";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { api } from "@/lib/api";
 import type { DocSchema, DocumentSummary } from "@/lib/types";
+import ThemedSelect from "./themed-select";
+
+// Built-in doc types (mirror backend/app/schemas/registry.py) so the dropdown
+// always has selectable options even if the /schemas request fails on prod.
+const FALLBACK_SCHEMAS: Pick<DocSchema, "key" | "name">[] = [
+  { key: "invoice", name: "Invoice" },
+  { key: "resume", name: "Resume" },
+  { key: "contract", name: "Contract" },
+  { key: "generic", name: "Generic" },
+];
 
 export default function HomePage() {
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
   const [schemas, setSchemas] = useState<DocSchema[]>([]);
+  const [schemaWarning, setSchemaWarning] = useState<string | null>(null);
   const [docType, setDocType] = useState("generic");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Always render a non-empty list; prefer live schemas, fall back to built-ins.
+  const docTypeOptions = useMemo(
+    () =>
+      schemas.length > 0
+        ? schemas.map((s) => ({ key: s.key, name: s.name }))
+        : FALLBACK_SCHEMAS,
+    [schemas]
+  );
+
+  // Keep the selected type valid against whatever list is shown.
+  useEffect(() => {
+    if (!docTypeOptions.some((o) => o.key === docType)) {
+      setDocType(docTypeOptions[0]?.key ?? "generic");
+    }
+  }, [docTypeOptions, docType]);
+
   async function refresh() {
     try {
-      const [d, s] = await Promise.all([api.listDocuments(), api.listSchemas()]);
+      const d = await api.listDocuments();
       setDocs(d);
-      setSchemas(s);
     } catch (e) {
       setError((e as Error).message);
+    }
+    try {
+      const s = await api.listSchemas();
+      setSchemas(s);
+      setSchemaWarning(null);
+    } catch {
+      setSchemaWarning(
+        "Could not load document types from the API. Showing built-in types."
+      );
     }
   }
 
@@ -60,32 +95,33 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       <section>
-        <h1 className="text-2xl font-semibold">Extract structured data</h1>
-        <p className="mt-1 text-(--muted)">
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Extract structured data
+        </h1>
+        <p className="mt-2 max-w-2xl text-(--muted)">
           Upload a document, pick a type, and get application-ready JSON with
           confidence scores and provenance.
         </p>
       </section>
 
-      <section className="rounded-xl border border-(--border) bg-(--surface) p-6">
+      <section className="rounded-2xl border border-(--border) bg-(--surface) p-6 shadow-(--shadow)">
         <div className="flex flex-wrap items-end gap-4">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-(--muted)">Document type</span>
-            <select
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-(--muted)">Document type</span>
+            <ThemedSelect
+              inputId="doc-type"
+              ariaLabel="Document type"
               value={docType}
-              onChange={(e) => setDocType(e.target.value)}
-              className="min-w-52 rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2"
-            >
-              {schemas.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+              onChange={setDocType}
+              options={docTypeOptions.map((s) => ({
+                value: s.key,
+                label: s.name,
+              }))}
+            />
           </label>
 
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-(--muted)">File</span>
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-(--muted)">File</span>
             <input
               ref={fileRef}
               type="file"
@@ -95,17 +131,23 @@ export default function HomePage() {
                 if (f) handleUpload(f, true);
               }}
               disabled={busy}
-              className="rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2 file:mr-3 file:rounded file:border-0 file:bg-(--accent) file:px-3 file:py-1 file:text-[#0b0f17]"
+              className="rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2 text-(--text) file:mr-3 file:rounded-md file:border-0 file:bg-(--accent) file:px-3 file:py-1 file:font-medium file:text-(--accent-foreground) hover:file:bg-(--accent-hover)"
             />
           </label>
 
-          <span className="text-sm text-(--muted)">
+          <span className="pb-2 text-sm text-(--muted)">
             {busy ? "Working..." : "Uploading runs extraction automatically."}
           </span>
         </div>
 
+        {schemaWarning && (
+          <p className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-500">
+            {schemaWarning}
+          </p>
+        )}
+
         {error && (
-          <p className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          <p className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-500">
             {error}
           </p>
         )}
@@ -114,40 +156,42 @@ export default function HomePage() {
       <section>
         <h2 className="mb-3 text-lg font-semibold">Documents</h2>
         {docs.length === 0 ? (
-          <p className="text-(--muted)">No documents yet.</p>
+          <p className="rounded-xl border border-dashed border-(--border) bg-(--surface) px-4 py-8 text-center text-(--muted)">
+            No documents yet.
+          </p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-(--border)">
+          <div className="overflow-hidden rounded-2xl border border-(--border) shadow-(--shadow)">
             <table className="w-full text-left text-sm">
               <thead className="bg-(--surface-2) text-(--muted)">
                 <tr>
-                  <th className="px-4 py-2">File</th>
-                  <th className="px-4 py-2">Type</th>
-                  <th className="px-4 py-2">Runs</th>
-                  <th className="px-4 py-2">Uploaded</th>
-                  <th className="px-4 py-2"></th>
+                  <th className="px-4 py-3 font-medium">File</th>
+                  <th className="px-4 py-3 font-medium">Type</th>
+                  <th className="px-4 py-3 font-medium">Runs</th>
+                  <th className="px-4 py-3 font-medium">Uploaded</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody>
                 {docs.map((d) => (
                   <tr
                     key={d.id}
-                    className="border-t border-(--border) bg-(--surface)"
+                    className="border-t border-(--border) bg-(--surface) transition-colors hover:bg-(--surface-2)"
                   >
-                    <td className="px-4 py-2 font-medium">{d.filename}</td>
-                    <td className="px-4 py-2 uppercase text-(--muted)">
+                    <td className="px-4 py-3 font-medium">{d.filename}</td>
+                    <td className="px-4 py-3 uppercase text-(--muted)">
                       {d.kind}
                     </td>
-                    <td className="px-4 py-2">{d.run_count}</td>
-                    <td className="px-4 py-2 text-(--muted)">
+                    <td className="px-4 py-3">{d.run_count}</td>
+                    <td className="px-4 py-3 text-(--muted)">
                       {d.created_at
                         ? new Date(d.created_at).toLocaleString()
                         : "-"}
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => runOn(d.id)}
                         disabled={busy}
-                        className="rounded-lg bg-(--accent) px-3 py-1 font-medium text-[#0b0f17] disabled:opacity-50"
+                        className="rounded-lg bg-(--accent) px-3 py-1.5 font-medium text-(--accent-foreground) transition-colors hover:bg-(--accent-hover) disabled:opacity-50"
                       >
                         Extract
                       </button>
@@ -158,19 +202,6 @@ export default function HomePage() {
             </table>
           </div>
         )}
-      </section>
-
-      <section className="text-sm text-(--muted)">
-        Tip: manage past runs from the API at{" "}
-        <a
-          href={`${API_BASE}/docs`}
-          target="_blank"
-          rel="noreferrer"
-          className="text-(--accent)"
-        >
-          /docs
-        </a>
-        .
       </section>
     </div>
   );

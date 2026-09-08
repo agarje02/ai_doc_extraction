@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { API_BASE } from "@/lib/api";
+import ThemeToggle from "./theme-toggle";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,36 +8,49 @@ export const metadata: Metadata = {
   description: "Extract structured entities from unstructured documents.",
 };
 
+// Applied before paint to avoid a flash of the wrong theme.
+// Light is the default; only an explicit user choice switches to dark.
+const themeInitScript = `
+(function () {
+  try {
+    var stored = localStorage.getItem('theme');
+    var theme = stored === 'dark' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = theme;
+  } catch (e) {
+    document.documentElement.dataset.theme = 'light';
+  }
+})();
+`;
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body>
-        <header className="border-b border-(--border) bg-(--surface)">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-(--accent) font-bold text-[#0b0f17]">
+        <header className="sticky top-0 z-20 border-b border-(--border) bg-(--surface)/80 shadow-(--shadow) backdrop-blur">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-(--accent) font-bold text-(--accent-foreground) shadow-(--shadow)">
                 AI
               </span>
-              <span className="text-lg font-semibold">
+              <span className="text-lg font-semibold tracking-tight">
                 Document Intelligence
               </span>
             </Link>
-            <nav className="flex items-center gap-4 text-sm text-(--muted)">
-              <Link href="/" className="hover:text-(--text)">
+            <nav className="flex items-center gap-2 text-sm">
+              <Link
+                href="/"
+                className="rounded-lg px-3 py-1.5 text-(--muted) transition-colors hover:bg-(--surface-2) hover:text-(--text)"
+              >
                 Documents
               </Link>
-              <a
-                href={`${API_BASE}/docs`}
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-(--text)"
-              >
-                API
-              </a>
+              <ThemeToggle />
             </nav>
           </div>
         </header>

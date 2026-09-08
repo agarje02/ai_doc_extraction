@@ -1,13 +1,37 @@
 @import "tailwindcss";
 
+/* --- Design tokens: semantic layer (light default, dark override) --- */
 :root {
-  --background: #0b0f17;
-  --surface: #131a26;
-  --surface-2: #1a2433;
-  --border: #263143;
-  --text: #e6edf6;
-  --muted: #93a1b5;
-  --accent: #6ea8fe;
+  --background: #f7f8fb;
+  --surface: #ffffff;
+  --surface-2: #f1f3f9;
+  --border: #e3e7ef;
+  --text: #0f1729;
+  --muted: #5b6577;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-foreground: #ffffff;
+  --ring: #c7d2fe;
+  --shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 10px 30px -12px rgba(16, 24, 40, 0.25);
+  color-scheme: light;
+}
+
+/* Dark theme: V7 Labs-inspired near-black, monochrome accent (no blue) */
+[data-theme="dark"] {
+  --background: #000000;
+  --surface: #0b0b0d;
+  --surface-2: #17181c;
+  --border: #26272b;
+  --text: #f5f5f6;
+  --muted: #9a9ca3;
+  --accent: #f5f5f6;
+  --accent-hover: #d4d4d8;
+  --accent-foreground: #000000;
+  --ring: #3a3b40;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 16px 40px -16px rgba(0, 0, 0, 0.85);
+  color-scheme: dark;
 }
 
 html,
@@ -16,8 +40,25 @@ body {
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 * {
   box-sizing: border-box;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+/* Consistent, theme-aware focus rings */
+:where(button, a, input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+  border-radius: 0.5rem;
 }
