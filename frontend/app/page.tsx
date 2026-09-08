@@ -19,11 +19,18 @@ const FALLBACK_SCHEMAS: Pick<DocSchema, "key" | "name">[] = [
 const OWNER_ID_STORAGE_KEY = "ownerId";
 const OWNER_ID_RE = /^[A-Za-z0-9_-]{3,128}$/;
 
+// Random, browser-local id. Data is scoped to this id, so it is tied to the
+// browser: clearing storage or switching browsers starts a fresh workspace.
+function generateOwnerId(): string {
+  const rand = globalThis.crypto?.randomUUID?.();
+  if (rand) return rand;
+  // Fallback for older browsers without crypto.randomUUID.
+  return `id-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+}
+
 export default function HomePage() {
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [ownerReady, setOwnerReady] = useState(false);
-  const [idInput, setIdInput] = useState("");
-  const [idError, setIdError] = useState<string | null>(null);
 
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
   const [schemas, setSchemas] = useState<DocSchema[]>([]);
@@ -69,15 +76,15 @@ export default function HomePage() {
     }
   }
 
-  // Load a previously validated id from localStorage on first render.
+  // Load the browser-local id from localStorage, creating one on first visit.
   useEffect(() => {
-    const stored =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem(OWNER_ID_STORAGE_KEY)
-        : null;
-    if (stored && OWNER_ID_RE.test(stored)) {
-      setOwnerId(stored);
+    if (typeof window === "undefined") return;
+    let id = window.localStorage.getItem(OWNER_ID_STORAGE_KEY);
+    if (!id || !OWNER_ID_RE.test(id)) {
+      id = generateOwnerId();
+      window.localStorage.setItem(OWNER_ID_STORAGE_KEY, id);
     }
+    setOwnerId(id);
     setOwnerReady(true);
   }, []);
 
@@ -86,30 +93,6 @@ export default function HomePage() {
     if (ownerId) refresh(ownerId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ownerId]);
-
-  function submitId(e: React.FormEvent) {
-    e.preventDefault();
-    const candidate = idInput.trim();
-    if (!OWNER_ID_RE.test(candidate)) {
-      setIdError(
-        "Use 3-128 characters: letters, numbers, hyphen or underscore."
-      );
-      return;
-    }
-    setIdError(null);
-    window.localStorage.setItem(OWNER_ID_STORAGE_KEY, candidate);
-    setDocs([]);
-    setError(null);
-    setOwnerId(candidate);
-  }
-
-  function changeId() {
-    window.localStorage.removeItem(OWNER_ID_STORAGE_KEY);
-    setIdInput(ownerId ?? "");
-    setDocs([]);
-    setError(null);
-    setOwnerId(null);
-  }
 
   async function handleUpload(file: File, runAfter: boolean) {
     if (!ownerId) return;
@@ -143,74 +126,15 @@ export default function HomePage() {
     }
   }
 
-  // Avoid a flash of the wrong screen before localStorage is read.
+  // Avoid a flash before the browser-local id is resolved from localStorage.
   if (!ownerReady) return null;
-
-  // ID gate: require a validated id before showing any files.
-  if (!ownerId) {
-    return (
-      <div className="mx-auto max-w-md space-y-6">
-        <section>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Enter your ID
-          </h1>
-          <p className="mt-2 text-(--muted)">
-            Your documents are scoped to this ID. Enter it to view and upload
-            files linked to it.
-          </p>
-        </section>
-
-        <form
-          onSubmit={submitId}
-          className="space-y-4 rounded-2xl border border-(--border) bg-(--surface) p-6 shadow-(--shadow)"
-        >
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-(--muted)">ID</span>
-            <input
-              autoFocus
-              value={idInput}
-              onChange={(e) => setIdInput(e.target.value)}
-              placeholder="e.g. acme-team-01"
-              className="rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2 text-(--text)"
-            />
-          </label>
-
-          {idError && (
-            <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-500">
-              {idError}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-(--accent) px-3 py-2 font-medium text-(--accent-foreground) transition-colors hover:bg-(--accent-hover)"
-          >
-            Continue
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">
       <section>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Extract structured data
-          </h1>
-          <div className="flex items-center gap-2 text-sm text-(--muted)">
-            <span>
-              ID: <span className="font-medium text-(--text)">{ownerId}</span>
-            </span>
-            <button
-              onClick={changeId}
-              className="rounded-lg border border-(--border) bg-(--surface-2) px-3 py-1.5 font-medium text-(--text) transition-colors hover:bg-(--surface)"
-            >
-              Change
-            </button>
-          </div>
-        </div>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Extract structured data
+        </h1>
         <p className="mt-2 max-w-2xl text-(--muted)">
           Upload a document, pick a type, and get application-ready JSON with
           confidence scores and provenance.
