@@ -108,4 +108,12 @@ def download_document(doc_id: str, db: Session = Depends(get_session)) -> FileRe
     path = Path(doc.stored_path)
     if not path.exists():
         raise HTTPException(status_code=410, detail="Stored file is missing")
-    return FileResponse(str(path), filename=doc.filename)
+    # Serve inline so the file renders inside the review page's <iframe>/<img>
+    # instead of triggering a browser download. Passing ``filename`` alone makes
+    # Starlette send ``Content-Disposition: attachment`` (forces a download and
+    # leaves the preview iframe blank).
+    return FileResponse(
+        str(path),
+        filename=doc.filename,
+        content_disposition_type="inline",
+    )
