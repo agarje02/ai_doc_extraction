@@ -27,19 +27,20 @@ export const api = {
       json<DocSchema[]>(r)
     ),
 
-  listDocuments: () =>
-    fetch(`${API_BASE}/documents`, { cache: "no-store" }).then((r) =>
-      json<DocumentSummary[]>(r)
-    ),
+  listDocuments: (ownerId: string) =>
+    fetch(`${API_BASE}/documents?owner_id=${encodeURIComponent(ownerId)}`, {
+      cache: "no-store",
+    }).then((r) => json<DocumentSummary[]>(r)),
 
   getDocument: (id: string) =>
     fetch(`${API_BASE}/documents/${id}`, { cache: "no-store" }).then((r) =>
       json<DocumentSummary>(r)
     ),
 
-  uploadDocument: (file: File) => {
+  uploadDocument: (file: File, ownerId: string) => {
     const form = new FormData();
     form.append("file", file);
+    form.append("owner_id", ownerId);
     return fetch(`${API_BASE}/documents`, {
       method: "POST",
       body: form,

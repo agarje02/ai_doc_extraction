@@ -1,5 +1,6 @@
 export interface DocumentSummary {
   id: string;
+  owner_id?: string;
   filename: string;
   kind: string;
   size_bytes: number;

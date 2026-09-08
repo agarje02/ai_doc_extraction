@@ -19,6 +19,8 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    inspect,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
@@ -65,6 +67,8 @@ class Document(Base):
     __tablename__ = "documents"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    # Owner/workspace id used to scope which documents a user can see.
+    owner_id: Mapped[str] = mapped_column(String(128), default="", index=True)
     filename: Mapped[str] = mapped_column(String(512))
     kind: Mapped[str] = mapped_column(String(32))
     size_bytes: Mapped[int] = mapped_column(Integer, default=0)
@@ -150,6 +154,24 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
+    _ensure_owner_id_column()
+
+
+def _ensure_owner_id_column() -> None:
+    """Lightweight migration: add ``documents.owner_id`` to pre-existing DBs.
+
+    ``create_all`` never alters existing tables, so databases created before
+    this column was introduced would be missing it. Add it if absent.
+    """
+    inspector = inspect(engine)
+    if "documents" not in inspector.get_table_names():
+        return
+    columns = {col["name"] for col in inspector.get_columns("documents")}
+    if "owner_id" not in columns:
+        with engine.begin() as conn:
+            conn.execute(
+                text("ALTER TABLE documents ADD COLUMN owner_id VARCHAR(128) DEFAULT ''")
+            )
 
 
 def get_session():

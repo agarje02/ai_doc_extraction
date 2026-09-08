@@ -18,10 +18,13 @@ from app.schemas.registry import get_schema
 from .pipeline import run_on_path
 
 
-def create_document(db: Session, filename: str, data: bytes) -> Document:
+def create_document(
+    db: Session, filename: str, data: bytes, owner_id: str = ""
+) -> Document:
     stored = save_upload(filename, data)
     doc = Document(
         id=stored.id,
+        owner_id=owner_id,
         filename=stored.filename,
         kind=stored.kind,
         size_bytes=stored.size_bytes,
